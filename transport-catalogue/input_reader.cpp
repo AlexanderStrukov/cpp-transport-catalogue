@@ -6,6 +6,7 @@
 #include <iostream>
 
 using namespace std::literals;
+using namespace InputData;
 
 /**
  * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
@@ -17,7 +18,7 @@ Coordinates ParseCoordinates(std::string_view str) {
     auto comma = str.find(',');
 
     if (comma == str.npos) {
-        return {nan, nan};
+        return { nan, nan };
     }
 
     auto not_space2 = str.find_first_not_of(' ', comma + 1);
@@ -25,7 +26,7 @@ Coordinates ParseCoordinates(std::string_view str) {
     double lat = std::stod(std::string(str.substr(not_space, comma - not_space)));
     double lng = std::stod(std::string(str.substr(not_space2)));
 
-    return {lat, lng};
+    return { lat, lng };
 }
 
 /**
@@ -93,19 +94,19 @@ CommandDescription ParseCommandDescription(std::string_view line) {
         return {};
     }
 
-    return {std::string(line.substr(0, space_pos)),
+    return { std::string(line.substr(0, space_pos)),
             std::string(line.substr(not_space, colon_pos - not_space)),
-            std::string(line.substr(colon_pos + 1))};
+            std::string(line.substr(colon_pos + 1)) };
 }
 
-void InputReader::ParseLine(std::string_view line) {
+void Reader::ParseLine(std::string_view line) {
     auto command_description = ParseCommandDescription(line);
     if (command_description) {
         commands_.push_back(std::move(command_description));
     }
 }
 
-void InputReader::ApplyCommands([[maybe_unused]] Transport::Catalogue& catalogue) const {
+void Reader::ApplyCommands([[maybe_unused]] Transport::Catalogue& catalogue) const {
     for (const auto& command : commands_) {
         if (command.command == "Stop") {
             Coordinates coords = ParseCoordinates(command.description);
@@ -119,4 +120,18 @@ void InputReader::ApplyCommands([[maybe_unused]] Transport::Catalogue& catalogue
             catalogue.AddBus(command.id, stops);
         }
     }
+}
+
+void InputData::ProccessingCommands(std::istream& input, Transport::Catalogue& catalogue) {
+    int base_request_count;
+    input >> base_request_count >> std::ws;
+
+    Reader reader;
+    for (int i = 0; i < base_request_count; ++i) {
+        std::string line;
+        std::getline(input, line);
+        reader.ParseLine(line);
+    }
+
+    reader.ApplyCommands(catalogue);
 }

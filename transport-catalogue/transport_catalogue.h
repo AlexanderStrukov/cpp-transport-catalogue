@@ -1,9 +1,11 @@
 #pragma once
-#include <unordered_map>
+
+#include "geo.h"
+
 #include <deque>
 #include <string>
 #include <vector>
-#include "geo.h"
+#include <unordered_map>
 #include <unordered_set>
 
 namespace Transport {
@@ -23,15 +25,18 @@ namespace Transport {
     public:
 
         void AddStop(const std::string&, Coordinates);
+
         void AddBus(const std::string&, const std::vector<std::string_view>);
 
         const Stop* GetStop(std::string) const;
+
         const Bus* GetBus(std::string) const;
 
         double GetDistance(const Bus&) const;
+
         std::unordered_set<const Stop*> GetUniqueStops(const Bus&) const;
 
-        std::unordered_map<std::string, std::vector<const Bus*>> GetBusesFromStop() const;
+        std::vector<std::string> GetBusesForStop(std::string stop_name) const;
 
     private:
 

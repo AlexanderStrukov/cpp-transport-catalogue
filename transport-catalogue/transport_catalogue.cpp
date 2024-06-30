@@ -1,12 +1,14 @@
 #include "transport_catalogue.h"
 #include "stat_reader.h"
+
+#include <algorithm>
 #include <iostream>
 #include <iterator>
 
 namespace TS = Transport;
 
 void TS::Catalogue::AddStop(const std::string& stop_name, Coordinates coords) {
-	Stop stop{stop_name, coords};
+	Stop stop{ stop_name, coords };
 	stops_.push_back(std::move(stop));
 
 	const Stop* ptr = &stops_.back();
@@ -50,7 +52,7 @@ double Transport::Catalogue::GetDistance(const Bus& bus) const {
 
 	if (bus.stops.size() != 0) {
 		for (size_t ind = 0; ind != bus.stops.size() - 1; ++ind) {
-			distance += ComputeDistance(bus.stops[ind]->coords, bus.stops[ind+1]->coords);
+			distance += ComputeDistance(bus.stops[ind]->coords, bus.stops[ind + 1]->coords);
 		}
 	}
 
@@ -61,6 +63,15 @@ std::unordered_set<const TS::Stop*> Transport::Catalogue::GetUniqueStops(const T
 	return std::unordered_set<const Stop*>(bus.stops.begin(), bus.stops.end());
 }
 
-std::unordered_map<std::string, std::vector<const TS::Bus*>> Transport::Catalogue::GetBusesFromStop() const {
-	return buses_for_stop_;
+std::vector<std::string> Transport::Catalogue::GetBusesForStop(std::string stop_name) const {
+	std::vector<std::string> buses;
+
+	for (auto bus : buses_for_stop_.at(stop_name)) {
+		buses.push_back(bus->name);
+	}
+	auto last = std::unique(buses.begin(), buses.end());
+	buses.erase(last, buses.end());
+	std::sort(buses.begin(), buses.end());
+
+	return buses;
 }
