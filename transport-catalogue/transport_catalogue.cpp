@@ -47,27 +47,25 @@ const TS::Bus* Transport::Catalogue::GetBus(std::string bus_name) const {
 	return (iter != buses_by_names_.end()) ? iter->second : nullptr;
 }
 
-double Transport::Catalogue::GetDistance(const Bus& bus) const {
-	double distance = 0.0;
+TS::BusData Transport::Catalogue::GetBusData(const TS::Bus& bus) const {
+	BusData data;
+	data.count_stops = static_cast<int>(bus.stops.size());
+	data.unique_stops = static_cast<int>(std::unordered_set<const Stop*>(bus.stops.begin(), bus.stops.end()).size());
 
 	if (bus.stops.size() != 0) {
 		for (size_t ind = 0; ind != bus.stops.size() - 1; ++ind) {
-			distance += ComputeDistance(bus.stops[ind]->coords, bus.stops[ind + 1]->coords);
+			data.distance += ComputeDistance(bus.stops[ind]->coords, bus.stops[ind + 1]->coords);
 		}
 	}
 
-	return distance;
-}
-
-std::unordered_set<const TS::Stop*> Transport::Catalogue::GetUniqueStops(const TS::Bus& bus) const {
-	return std::unordered_set<const Stop*>(bus.stops.begin(), bus.stops.end());
+	return data;
 }
 
 std::vector<std::string> Transport::Catalogue::GetBusesForStop(std::string stop_name) const {
 	std::vector<std::string> buses;
 
 	for (auto bus : buses_for_stop_.at(stop_name)) {
-		buses.push_back(bus->name);
+		buses.push_back(std::move(bus->name));
 	}
 	auto last = std::unique(buses.begin(), buses.end());
 	buses.erase(last, buses.end());

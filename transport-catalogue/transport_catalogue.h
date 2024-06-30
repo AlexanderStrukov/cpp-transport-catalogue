@@ -1,11 +1,9 @@
 #pragma once
-
-#include "geo.h"
-
+#include <unordered_map>
 #include <deque>
 #include <string>
 #include <vector>
-#include <unordered_map>
+#include "geo.h"
 #include <unordered_set>
 
 namespace Transport {
@@ -20,6 +18,12 @@ namespace Transport {
         std::vector<const Stop*> stops;
     };
 
+    struct BusData {
+        int count_stops = 0;
+        int unique_stops = 0;
+        double distance = 0.0;
+    };
+
     class Catalogue {
 
     public:
@@ -32,9 +36,7 @@ namespace Transport {
 
         const Bus* GetBus(std::string) const;
 
-        double GetDistance(const Bus&) const;
-
-        std::unordered_set<const Stop*> GetUniqueStops(const Bus&) const;
+        BusData GetBusData(const Bus&) const;
 
         std::vector<std::string> GetBusesForStop(std::string stop_name) const;
 

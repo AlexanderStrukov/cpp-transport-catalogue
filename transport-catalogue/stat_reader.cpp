@@ -15,10 +15,11 @@ void OutputBusData(const Transport::Catalogue& catalogue, std::string_view reque
         output << request << ": not found" << std::endl;
     }
     else {
+        Transport::BusData bus_data = catalogue.GetBusData(*bus);
         output << std::setprecision(6);
-        output << request << ": " << bus->stops.size() << " stops on route, "
-            << (catalogue.GetUniqueStops(*bus)).size() << " unique stops, "
-            << catalogue.GetDistance(*bus) << " route length" << std::endl;
+        output << request << ": " << bus_data.count_stops << " stops on route, "
+            << bus_data.unique_stops << " unique stops, "
+            << bus_data.distance << " route length" << std::endl;
     }
 }
 
