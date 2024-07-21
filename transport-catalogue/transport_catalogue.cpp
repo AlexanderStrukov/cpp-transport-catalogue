@@ -37,31 +37,53 @@ void TS::Catalogue::AddBus(const std::string& bus_name, const std::vector<std::s
 	}
 }
 
+void TS::Catalogue::AddDistance(const std::string& name, std::unordered_map<std::string, int> stop_names) {
+	const auto stop_from = GetStop(name);
+
+	for (auto& [stop_name, distance] : stop_names) {
+		const auto& stop_to = GetStop(stop_name);
+
+		distances_[std::pair(stop_from, stop_to)] = distance;
+	}
+}
+
 const TS::Stop* TS::Catalogue::GetStop(std::string stop_name) const {
 	auto iter = stops_by_names_.find(stop_name);
 	return (iter != stops_by_names_.end()) ? iter->second : nullptr;
 }
 
-const TS::Bus* Transport::Catalogue::GetBus(std::string bus_name) const {
+const TS::Bus* TS::Catalogue::GetBus(std::string bus_name) const {
 	auto iter = buses_by_names_.find(bus_name);
 	return (iter != buses_by_names_.end()) ? iter->second : nullptr;
 }
 
-TS::BusData Transport::Catalogue::GetBusData(const TS::Bus& bus) const {
+double TS::Catalogue::GetDistanceBetweenStops(const std::pair<const Stop*, const Stop*> stops) const {
+	auto iter = distances_.find(stops);
+
+	if (iter == distances_.end()) {
+		iter = distances_.find({stops.second, stops.first});
+	}
+
+	return (iter != distances_.end()) ? iter->second : ComputeDistance(stops.first->coords, stops.second->coords);
+}
+
+TS::BusData TS::Catalogue::GetBusData(const TS::Bus& bus) const {
+
 	BusData data;
 	data.count_stops = static_cast<int>(bus.stops.size());
 	data.unique_stops = static_cast<int>(std::unordered_set<const Stop*>(bus.stops.begin(), bus.stops.end()).size());
 
 	if (bus.stops.size() != 0) {
 		for (size_t ind = 0; ind != bus.stops.size() - 1; ++ind) {
-			data.distance += ComputeDistance(bus.stops[ind]->coords, bus.stops[ind + 1]->coords);
+			data.real_distance += GetDistanceBetweenStops({ bus.stops[ind], bus.stops[ind + 1] });
+			data.geo_distance += ComputeDistance(bus.stops[ind]->coords, bus.stops[ind + 1]->coords);
 		}
 	}
 
 	return data;
 }
 
-std::vector<std::string> Transport::Catalogue::GetBusesForStop(std::string stop_name) const {
+std::vector<std::string> TS::Catalogue::GetBusesForStop(std::string stop_name) const {
 	std::vector<std::string> buses;
 
 	for (auto bus : buses_for_stop_.at(stop_name)) {
@@ -72,4 +94,16 @@ std::vector<std::string> Transport::Catalogue::GetBusesForStop(std::string stop_
 	std::sort(buses.begin(), buses.end());
 
 	return buses;
+}
+
+double TS::Catalogue::GetDistanceOfRoute(const std::string& bus_name) const {
+	const auto bus = GetBus(bus_name);
+
+	double result = 0.0;
+
+	for (auto iter = bus->stops.begin(); iter < bus->stops.end(); ++iter) {
+		result += GetDistanceBetweenStops({ *iter, *next(iter) });
+	}
+
+	return result;
 }

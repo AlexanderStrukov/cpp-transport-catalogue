@@ -39,6 +39,6 @@ namespace InputData {
         std::vector<CommandDescription> commands_;
     };
 
-    void ProccessingCommands(std::istream& input, Transport::Catalogue& catalogue);
+    void ProcessCommands(std::istream& input, Transport::Catalogue& catalogue);
 
 }

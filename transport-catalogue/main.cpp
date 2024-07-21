@@ -9,7 +9,7 @@ using namespace std;
 int main() {
     Transport::Catalogue catalogue;
 
-    InputData::ProccessingCommands(cin, catalogue);
+    InputData::ProcessCommands(cin, catalogue);
 
-    ProccessingRequestsInfo(cin, catalogue, cout);
+    ProcessRequestsInfo(cin, catalogue, cout);
 }

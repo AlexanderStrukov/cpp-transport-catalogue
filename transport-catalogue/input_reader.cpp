@@ -8,9 +8,6 @@
 using namespace std::literals;
 using namespace InputData;
 
-/**
- * Парсит строку вида "10.123,  -30.1837" и возвращает пару координат (широта, долгота)
- */
 Coordinates ParseCoordinates(std::string_view str) {
     static const double nan = std::nan("");
 
@@ -29,9 +26,6 @@ Coordinates ParseCoordinates(std::string_view str) {
     return { lat, lng };
 }
 
-/**
- * Удаляет пробелы в начале и конце строки
- */
 std::string_view Trim(std::string_view string) {
     const auto start = string.find_first_not_of(' ');
     if (start == string.npos) {
@@ -40,9 +34,6 @@ std::string_view Trim(std::string_view string) {
     return string.substr(start, string.find_last_not_of(' ') + 1 - start);
 }
 
-/**
- * Разбивает строку string на n строк, с помощью указанного символа-разделителя delim
- */
 std::vector<std::string_view> Split(std::string_view string, char delim) {
     std::vector<std::string_view> result;
 
@@ -61,11 +52,6 @@ std::vector<std::string_view> Split(std::string_view string, char delim) {
     return result;
 }
 
-/**
- * Парсит маршрут.
- * Для кольцевого маршрута (A>B>C>A) возвращает массив названий остановок [A,B,C,A]
- * Для некольцевого маршрута (A-B-C-D) возвращает массив названий остановок [A,B,C,D,C,B,A]
- */
 std::vector<std::string_view> ParseRoute(std::string_view route) {
     if (route.find('>') != route.npos) {
         return Split(route, '>');
@@ -99,6 +85,31 @@ CommandDescription ParseCommandDescription(std::string_view line) {
             std::string(line.substr(colon_pos + 1)) };
 }
 
+/*
+ * Парсит строку вида "3700m to Narushkino" и возвращает вектор пар (расстояние, назначение)
+ */
+std::unordered_map<std::string, int> ParseDistance(std::string_view data) {
+    using namespace std::string_view_literals;
+    auto delim = "m to "sv;
+
+    std::unordered_map<std::string, int> distances;
+    auto parts = Split(data, ',');
+
+    for (auto& part : parts) {
+        auto delim_pos = part.find(delim);
+
+        if (delim_pos == std::string::npos) {
+            continue;
+        }
+
+        auto distance = std::stoi(std::string(part.substr(0, delim_pos)));
+        auto dest = part.substr(delim_pos + delim.size());
+        distances[std::string(dest)] = distance;
+    }
+
+    return distances;
+}
+
 void Reader::ParseLine(std::string_view line) {
     auto command_description = ParseCommandDescription(line);
     if (command_description) {
@@ -115,6 +126,11 @@ void Reader::ApplyCommands([[maybe_unused]] Transport::Catalogue& catalogue) con
     }
 
     for (const auto& command : commands_) {
+        std::unordered_map<std::string, int> distances = ParseDistance(command.description);
+        catalogue.AddDistance(command.id, distances);
+    }
+
+    for (const auto& command : commands_) {
         if (command.command == "Bus") {
             std::vector<std::string_view> stops = ParseRoute(command.description);
             catalogue.AddBus(command.id, stops);
@@ -122,7 +138,7 @@ void Reader::ApplyCommands([[maybe_unused]] Transport::Catalogue& catalogue) con
     }
 }
 
-void InputData::ProccessingCommands(std::istream& input, Transport::Catalogue& catalogue) {
+void InputData::ProcessCommands(std::istream& input, Transport::Catalogue& catalogue) {
     int base_request_count;
     input >> base_request_count >> std::ws;
 
