@@ -127,7 +127,9 @@ void Reader::ApplyCommands([[maybe_unused]] Transport::Catalogue& catalogue) con
 
     for (const auto& command : commands_) {
         std::unordered_map<std::string, int> distances = ParseDistance(command.description);
-        catalogue.AddDistance(command.id, distances);
+        for (auto [name, distance] : distances) {
+            catalogue.AddDistance(std::pair(command.id, name), distance);
+        }
     }
 
     for (const auto& command : commands_) {

@@ -2,9 +2,11 @@
 #include <unordered_map>
 #include <deque>
 #include <string>
+#include <string_view>
 #include <vector>
 #include "geo.h"
 #include <unordered_set>
+#include <set>
 #include <utility>
 
 namespace Transport {
@@ -31,8 +33,8 @@ namespace Transport {
 
         static auto StopHash(const Stop* stop) {
             return std::hash<std::string>{}(stop->name) +
-                std::hash<double>{}(stop->coords.lat) * coef +
-                std::hash<double>{}(stop->coords.lng) * coef * coef;
+                std::hash<double>{}(stop->coords.lat)* coef +
+                std::hash<double>{}(stop->coords.lng)* coef* coef;
         }
 
         size_t operator()(const std::pair<const Stop*, const Stop*>& stops) const {
@@ -45,23 +47,21 @@ namespace Transport {
 
     public:
 
-        void AddStop(const std::string&, Coordinates);
+        void AddStop(const std::string& stop_name, Coordinates coords);
 
-        void AddBus(const std::string&, const std::vector<std::string_view>);
+        void AddBus(const std::string& bus_name, const std::vector<std::string_view> stops_names);
 
-        void AddDistance(const std::string&, std::unordered_map<std::string, int>);
+        void AddDistance(const std::pair<std::string_view, std::string_view> stops, int distance);
 
-        const Stop* GetStop(std::string) const;
+        const Stop* GetStop(std::string_view stop_name) const;
 
-        const Bus* GetBus(std::string) const;
+        const Bus* GetBus(std::string_view bus_name) const;
 
-        double GetDistanceBetweenStops(const std::pair<const Stop*, const Stop*>) const;
+        double GetDistanceBetweenStops(const std::pair<const Stop*, const Stop*> stops) const;
 
-        BusData GetBusData(const Bus&) const;
+        BusData GetBusData(const Bus& bus) const;
 
-        std::vector<std::string> GetBusesForStop(std::string stop_name) const;
-
-        double GetDistanceOfRoute(const std::string&) const;
+        std::vector<std::string> GetBusesForStop(std::string_view stop_name) const;
 
     private:
 
@@ -71,7 +71,7 @@ namespace Transport {
         std::unordered_map<std::string, const Stop*> stops_by_names_;
         std::unordered_map<std::string, const Bus*> buses_by_names_;
 
-        std::unordered_map<std::string, std::vector<const Bus*>> buses_for_stop_;
+        std::unordered_map<std::string, std::set<std::string_view>> buses_for_stop_;
         std::unordered_map<std::pair<const Stop*, const Stop*>, int, Hasher> distances_;
     };
 

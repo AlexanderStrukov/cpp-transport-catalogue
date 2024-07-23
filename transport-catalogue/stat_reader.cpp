@@ -8,7 +8,7 @@
 using Transport::Bus, Transport::Stop;
 
 void OutputBusData(const Transport::Catalogue& catalogue, std::string_view request,
-                    std::ostream& output) {
+    std::ostream& output) {
     auto* bus = catalogue.GetBus(std::string(request).substr(request.find_first_of(' ') + 1));
 
     if (!bus) {
@@ -20,7 +20,7 @@ void OutputBusData(const Transport::Catalogue& catalogue, std::string_view reque
         output << std::setprecision(6);
         output << request << ": " << bus_data.count_stops << " stops on route, "
             << bus_data.unique_stops << " unique stops, "
-            << bus_data.real_distance << " route length, " 
+            << bus_data.real_distance << " route length, "
             << bus_data.real_distance / bus_data.geo_distance << " curvature" << std::endl;
     }
 }
