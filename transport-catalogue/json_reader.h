@@ -1,12 +1,8 @@
-/*
- * Здесь можно разместить код наполнения транспортного справочника данными из JSON,
- * а также код обработки запросов к базе и формирование массива ответов в формате JSON
- */
-
 #pragma once
 
 #include "json.h"
 #include "transport_catalogue.h"
+#include "map_renderer.h"
 
 #include <iostream>
 
@@ -17,6 +13,9 @@ public:
 
     const json::Node& ReadBaseRequests() const;
     const json::Node& ReadStatRequests() const;
+    const json::Node& ReadRenderSettings() const;
+
+    renderer::MapRenderer GetRenderSettings(const json::Dict& data_as_map) const;
 
     void FillCatalogue(Transport::Catalogue& catalogue);
 

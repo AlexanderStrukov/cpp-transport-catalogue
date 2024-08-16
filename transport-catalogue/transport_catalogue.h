@@ -5,32 +5,16 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <map>
 #include <unordered_set>
 #include <set>
 #include <utility>
 #include <optional>
 
 #include "geo.h"
+#include "domain.h"
 
 namespace Transport {
-
-    struct Stop {
-        std::string name;
-        geo::Coordinates coords;
-    };
-
-    struct Bus {
-        std::string name;
-        std::vector<const Stop*> stops;
-        bool is_circle;
-    };
-
-    struct BusData {
-        int count_stops = 0;
-        int unique_stops = 0;
-        double real_distance = 0.0;
-        double geo_distance = 0.0;
-    };
 
     struct Hasher {
         static const size_t coef = 67;
@@ -66,6 +50,8 @@ namespace Transport {
         BusData GetBusData(const std::string_view bus_name) const;
 
         double GetDistanceBetweenStops(const std::pair<const Stop*, const Stop*> stops) const;
+
+        const std::map<std::string_view, const Transport::Bus*> GetBusesSortedByNames() const;
 
     private:
 

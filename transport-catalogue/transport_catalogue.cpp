@@ -104,3 +104,11 @@ TS::BusData TS::Catalogue::GetBusData(const std::string_view bus_name) const {
 
 	return data;
 }
+
+const std::map<std::string_view, const TS::Bus*> TS::Catalogue::GetBusesSortedByNames() const {
+	std::map<std::string_view, const TS::Bus*> buses_by_names;
+	for (const auto& [name, bus] : buses_by_names_) {
+		buses_by_names[name] = bus;
+	}
+	return buses_by_names;
+}

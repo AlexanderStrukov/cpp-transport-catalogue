@@ -1,8 +1,3 @@
-/*
- * Здесь можно разместить код наполнения транспортного справочника данными из JSON,
- * а также код обработки запросов к базе и формирование массива ответов в формате JSON
- */
-
 #include "json_reader.h"
 
 const json::Node& JsonReader::ReadBaseRequests() const {
@@ -11,6 +6,69 @@ const json::Node& JsonReader::ReadBaseRequests() const {
 
 const json::Node& JsonReader::ReadStatRequests() const {
 	return input_.GetRoot().AsMap().at("stat_requests");
+}
+
+const json::Node& JsonReader::ReadRenderSettings() const {
+	return input_.GetRoot().AsMap().at("render_settings");
+}
+
+renderer::MapRenderer JsonReader::GetRenderSettings(const json::Dict& data_as_map) const {
+	renderer::RenderSettings settings;
+
+	settings.width = data_as_map.at("width").AsDouble();
+	settings.height = data_as_map.at("height").AsDouble();
+	settings.padding = data_as_map.at("padding").AsDouble();
+	settings.line_width = data_as_map.at("line_width").AsDouble();
+	settings.stop_radius = data_as_map.at("stop_radius").AsDouble();
+	settings.bus_label_font_size = data_as_map.at("bus_label_font_size").AsInt();
+	settings.stop_label_font_size = data_as_map.at("stop_label_font_size").AsInt();
+	settings.underlayer_width = data_as_map.at("underlayer_width").AsDouble();
+
+	const json::Array& bus_label_offset = data_as_map.at("bus_label_offset").AsArray();
+	settings.bus_label_offset = { bus_label_offset[0].AsDouble(), bus_label_offset[1].AsDouble() };
+	const json::Array& stop_label_offset = data_as_map.at("stop_label_offset").AsArray();
+	settings.stop_label_offset = { stop_label_offset[0].AsDouble(), stop_label_offset[1].AsDouble() };
+
+	if (data_as_map.at("underlayer_color").IsString())
+		settings.underlayer_color = data_as_map.at("underlayer_color").AsString();
+	else if (data_as_map.at("underlayer_color").IsArray())
+	{
+		const json::Array& underlayer_color = data_as_map.at("underlayer_color").AsArray();
+		if (underlayer_color.size() == 3)
+			settings.underlayer_color = svg::Rgb(underlayer_color[0].AsInt(),
+												underlayer_color[1].AsInt(), 
+												underlayer_color[2].AsInt());
+		else if (underlayer_color.size() == 4)
+			settings.underlayer_color = svg::Rgba(underlayer_color[0].AsInt(),
+												underlayer_color[1].AsInt(),
+												underlayer_color[2].AsInt(),
+												underlayer_color[3].AsDouble());
+		else
+			throw json::ParsingError("invalid color type");
+	}
+	else
+		throw json::ParsingError("invalid color");
+
+	const json::Array color_palette = data_as_map.at("color_palette").AsArray();
+	for (const auto& color : color_palette)
+	{
+		if (color.IsString())
+			settings.color_palette.push_back(color.AsString());
+		else if (color.IsArray())
+		{
+			const json::Array& type_color = color.AsArray();
+			if (type_color.size() == 3)
+				settings.color_palette.emplace_back(svg::Rgb(type_color[0].AsInt(), type_color[1].AsInt(), type_color[2].AsInt()));
+			else if (type_color.size() == 4)
+				settings.color_palette.emplace_back(svg::Rgba(type_color[0].AsInt(), type_color[1].AsInt(), type_color[2].AsInt(), type_color[3].AsDouble()));
+			else
+				throw json::ParsingError("invalid color type");
+		}
+		else
+			throw json::ParsingError("invalid color");
+	}
+
+	return settings;
 }
 
 void JsonReader::FillCatalogue(Transport::Catalogue& catalogue) {

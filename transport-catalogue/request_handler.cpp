@@ -1,20 +1,11 @@
-/*
- * Здесь можно было бы разместить код обработчика запросов к базе, содержащего логику, которую не
- * хотелось бы помещать ни в transport_catalogue, ни в json reader.
- *
- * Если вы затрудняетесь выбрать, что можно было бы поместить в этот файл,
- * можете оставить его пустым.
- */
-
 #include "request_handler.h"
 
-void RequestProcessor::ProcessRequests() const {
+void RequestProcessor::ProcessRequests(const json::Node& stat_requests) const {
 	using namespace std::literals;
 
 	json::Array processed_data;
 
-	const json::Array& stat_requests = reader_.ReadStatRequests().AsArray();
-	for (const auto& request : stat_requests) {
+	for (const auto& request : stat_requests.AsArray()) {
 		const auto& data_as_map = request.AsMap();
 		const auto& type = data_as_map.at("type").AsString();
 
@@ -24,6 +15,10 @@ void RequestProcessor::ProcessRequests() const {
 		else if (type == "Bus"s)
 		{
 			processed_data.emplace_back(ProcessBusData(data_as_map).AsMap());
+		}
+		else if (type == "Map"s)
+		{
+			processed_data.emplace_back(ProcessMap(data_as_map).AsMap());
 		}
 	}
 
@@ -72,4 +67,20 @@ const json::Node RequestProcessor::ProcessBusData(const json::Dict& data_as_map)
 	}
 
 	return json::Node{ request_data };
+}
+
+const json::Node RequestProcessor::ProcessMap(const json::Dict& request_map) const {
+	json::Dict result;
+
+	result["request_id"] = request_map.at("id").AsInt();
+	std::ostringstream out;
+	svg::Document map = RenderMap();
+	map.Render(out);
+	result["map"] = out.str();
+
+	return json::Node{ result };
+}
+
+svg::Document RequestProcessor::RenderMap() const {
+	return renderer_.GetDataSVG(catalogue_.GetBusesSortedByNames());
 }
