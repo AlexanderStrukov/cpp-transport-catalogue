@@ -1,15 +1,13 @@
-#include <iostream>
-#include <string>
-
-#include "input_reader.h"
-#include "stat_reader.h"
-
-using namespace std;
+#include "json_reader.h"
+#include "transport_catalogue.h"
+#include "request_handler.h"
 
 int main() {
+
     Transport::Catalogue catalogue;
 
-    InputData::ProcessCommands(cin, catalogue);
+    JsonReader requests(std::cin);
+    requests.FillCatalogue(catalogue);
+    RequestProcessor(requests, catalogue);
 
-    ProcessRequestsInfo(cin, catalogue, cout);
 }

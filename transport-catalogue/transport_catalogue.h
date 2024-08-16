@@ -1,24 +1,28 @@
 #pragma once
+
 #include <unordered_map>
 #include <deque>
 #include <string>
 #include <string_view>
 #include <vector>
-#include "geo.h"
 #include <unordered_set>
 #include <set>
 #include <utility>
+#include <optional>
+
+#include "geo.h"
 
 namespace Transport {
 
     struct Stop {
         std::string name;
-        Coordinates coords;
+        geo::Coordinates coords;
     };
 
     struct Bus {
         std::string name;
         std::vector<const Stop*> stops;
+        bool is_circle;
     };
 
     struct BusData {
@@ -47,9 +51,9 @@ namespace Transport {
 
     public:
 
-        void AddStop(const std::string& stop_name, Coordinates coords);
+        void AddStop(const std::string& stop_name, geo::Coordinates coords);
 
-        void AddBus(const std::string& bus_name, const std::vector<std::string_view> stops_names);
+        void AddBus(const std::string& bus_name, const std::vector<std::string_view> stops_names, bool is_roundtrip);
 
         void AddDistance(const std::pair<std::string_view, std::string_view> stops, int distance);
 
@@ -57,11 +61,11 @@ namespace Transport {
 
         const Bus* GetBus(std::string_view bus_name) const;
 
-        double GetDistanceBetweenStops(const std::pair<const Stop*, const Stop*> stops) const;
-
-        BusData GetBusData(const Bus& bus) const;
-
         std::vector<std::string> GetBusesForStop(std::string_view stop_name) const;
+
+        BusData GetBusData(const std::string_view bus_name) const;
+
+        double GetDistanceBetweenStops(const std::pair<const Stop*, const Stop*> stops) const;
 
     private:
 

@@ -1,5 +1,4 @@
 #include "transport_catalogue.h"
-#include "stat_reader.h"
 
 #include <algorithm>
 #include <iostream>
@@ -7,7 +6,7 @@
 
 namespace TS = Transport;
 
-void TS::Catalogue::AddStop(const std::string& stop_name, Coordinates coords) {
+void TS::Catalogue::AddStop(const std::string& stop_name, geo::Coordinates coords) {
 	Stop stop{ stop_name, coords };
 	stops_.push_back(std::move(stop));
 
@@ -18,9 +17,10 @@ void TS::Catalogue::AddStop(const std::string& stop_name, Coordinates coords) {
 	}
 }
 
-void TS::Catalogue::AddBus(const std::string& bus_name, const std::vector<std::string_view> stops_names) {
+void TS::Catalogue::AddBus(const std::string& bus_name, const std::vector<std::string_view> stops_names, bool is_roundtrip) {
 	Bus bus;
 	bus.name = bus_name;
+	bus.is_circle = is_roundtrip;
 
 	for (const auto& stop_name : stops_names) {
 		auto iter = stops_by_names_.find(std::string(stop_name));
@@ -55,32 +55,6 @@ const TS::Bus* TS::Catalogue::GetBus(std::string_view bus_name) const {
 	return (iter != buses_by_names_.end()) ? iter->second : nullptr;
 }
 
-double TS::Catalogue::GetDistanceBetweenStops(const std::pair<const Stop*, const Stop*> stops) const {
-	auto iter = distances_.find(stops);
-
-	if (iter == distances_.end()) {
-		iter = distances_.find({ stops.second, stops.first });
-	}
-
-	return (iter != distances_.end()) ? iter->second : ComputeDistance(stops.first->coords, stops.second->coords);
-}
-
-TS::BusData TS::Catalogue::GetBusData(const TS::Bus& bus) const {
-
-	BusData data;
-	data.count_stops = static_cast<int>(bus.stops.size());
-	data.unique_stops = static_cast<int>(std::unordered_set<const Stop*>(bus.stops.begin(), bus.stops.end()).size());
-
-	if (bus.stops.size() != 0) {
-		for (size_t ind = 0; ind != bus.stops.size() - 1; ++ind) {
-			data.real_distance += GetDistanceBetweenStops({ bus.stops[ind], bus.stops[ind + 1] });
-			data.geo_distance += ComputeDistance(bus.stops[ind]->coords, bus.stops[ind + 1]->coords);
-		}
-	}
-
-	return data;
-}
-
 std::vector<std::string> TS::Catalogue::GetBusesForStop(std::string_view stop_name) const {
 	std::vector<std::string> buses;
 
@@ -90,4 +64,43 @@ std::vector<std::string> TS::Catalogue::GetBusesForStop(std::string_view stop_na
 	std::sort(buses.begin(), buses.end());
 
 	return buses;
+}
+
+double TS::Catalogue::GetDistanceBetweenStops(const std::pair<const TS::Stop*, const TS::Stop*> stops) const {
+	auto iter = distances_.find(stops);
+
+	if (iter == distances_.end()) {
+		iter = distances_.find({ stops.second, stops.first });
+	}
+
+	return (iter != distances_.end()) ? iter->second : geo::ComputeDistance(stops.first->coords, stops.second->coords);
+}
+
+TS::BusData TS::Catalogue::GetBusData(const std::string_view bus_name) const {
+	TS::BusData data;
+
+	const TS::Bus* bus = GetBus(bus_name);
+	if (!bus)
+		throw std::invalid_argument("bus not found");
+
+	data.count_stops = (bus->is_circle) ? static_cast<int>(bus->stops.size())
+		: static_cast<int>(bus->stops.size()) * 2 - 1;
+	data.unique_stops = static_cast<int>(std::unordered_set<const TS::Stop*>(bus->stops.begin(), bus->stops.end()).size());
+
+	if (bus->stops.size() != 0) {
+		for (size_t ind = 0; ind != bus->stops.size() - 1; ++ind) {
+			if (bus->is_circle) {
+				data.real_distance += GetDistanceBetweenStops({ bus->stops[ind], bus->stops[ind + 1] });
+				data.geo_distance += geo::ComputeDistance(bus->stops[ind]->coords, bus->stops[ind + 1]->coords);
+			}
+			else
+			{
+				data.real_distance += GetDistanceBetweenStops({ bus->stops[ind], bus->stops[ind + 1] }) +
+					GetDistanceBetweenStops({ bus->stops[ind + 1], bus->stops[ind] });
+				data.geo_distance += geo::ComputeDistance(bus->stops[ind]->coords, bus->stops[ind + 1]->coords) * 2;
+			}
+		}
+	}
+
+	return data;
 }
