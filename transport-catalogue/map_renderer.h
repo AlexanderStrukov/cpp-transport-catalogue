@@ -115,6 +115,13 @@ namespace renderer {
         svg::Document GetDataSVG(const std::map<std::string_view, const Transport::Bus*>& buses_by_names) const;
 
     private:
+
+        svg::Text SetTextParams(const std::pair<std::string_view, const Transport::Bus*>& bus_by_name, const SphereProjector& projector) const;
+        svg::Text SetTextParams(const Transport::Stop* stop, const SphereProjector& projector) const;
+
+        svg::Text SetUnderlayerParams(const std::pair<std::string_view, const Transport::Bus*>& bus_by_name, const SphereProjector& projector) const;
+        svg::Text SetUnderlayerParams(const Transport::Stop* stop, const SphereProjector& projector) const;
+
         const RenderSettings render_settings_;
     };
 

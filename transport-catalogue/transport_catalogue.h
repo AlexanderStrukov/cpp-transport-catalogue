@@ -37,7 +37,7 @@ namespace Transport {
 
         void AddStop(const std::string& stop_name, geo::Coordinates coords);
 
-        void AddBus(const std::string& bus_name, const std::vector<std::string_view> stops_names, bool is_roundtrip);
+        void AddBus(const std::string& bus_name, const std::vector<std::string_view>& stops_names, bool is_roundtrip);
 
         void AddDistance(const std::pair<std::string_view, std::string_view> stops, int distance);
 
@@ -45,7 +45,7 @@ namespace Transport {
 
         const Bus* GetBus(std::string_view bus_name) const;
 
-        std::vector<std::string> GetBusesForStop(std::string_view stop_name) const;
+        std::set<std::string> GetBusesForStop(std::string_view stop_name) const;
 
         BusData GetBusData(const std::string_view bus_name) const;
 

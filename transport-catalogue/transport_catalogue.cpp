@@ -17,7 +17,7 @@ void TS::Catalogue::AddStop(const std::string& stop_name, geo::Coordinates coord
 	}
 }
 
-void TS::Catalogue::AddBus(const std::string& bus_name, const std::vector<std::string_view> stops_names, bool is_roundtrip) {
+void TS::Catalogue::AddBus(const std::string& bus_name, const std::vector<std::string_view>& stops_names, bool is_roundtrip) {
 	Bus bus;
 	bus.name = bus_name;
 	bus.is_circle = is_roundtrip;
@@ -55,13 +55,12 @@ const TS::Bus* TS::Catalogue::GetBus(std::string_view bus_name) const {
 	return (iter != buses_by_names_.end()) ? iter->second : nullptr;
 }
 
-std::vector<std::string> TS::Catalogue::GetBusesForStop(std::string_view stop_name) const {
-	std::vector<std::string> buses;
+std::set<std::string> TS::Catalogue::GetBusesForStop(std::string_view stop_name) const {
+	std::set<std::string> buses;
 
-	for (auto name : buses_for_stop_.at(std::string(stop_name))) {
-		buses.push_back(std::move(std::string(name)));
+	for (const auto name : buses_for_stop_.at(std::string(stop_name))) {
+		buses.emplace(std::string(name));
 	}
-	std::sort(buses.begin(), buses.end());
 
 	return buses;
 }

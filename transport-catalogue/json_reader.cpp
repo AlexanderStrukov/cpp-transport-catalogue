@@ -12,6 +12,57 @@ const json::Node& JsonReader::ReadRenderSettings() const {
 	return input_.GetRoot().AsMap().at("render_settings");
 }
 
+svg::Color JsonReader::GetUnderlayerColor(const json::Dict& data_as_map) const {
+	svg::Color color;
+
+	if (data_as_map.at("underlayer_color").IsString())
+		color = data_as_map.at("underlayer_color").AsString();
+	else if (data_as_map.at("underlayer_color").IsArray())
+	{
+		const json::Array& underlayer_color = data_as_map.at("underlayer_color").AsArray();
+		if (underlayer_color.size() == 3)
+			color = svg::Rgb(underlayer_color[0].AsInt(),
+				underlayer_color[1].AsInt(),
+				underlayer_color[2].AsInt());
+		else if (underlayer_color.size() == 4)
+			color = svg::Rgba(underlayer_color[0].AsInt(),
+				underlayer_color[1].AsInt(),
+				underlayer_color[2].AsInt(),
+				underlayer_color[3].AsDouble());
+		else
+			throw json::ParsingError("invalid color type");
+	}
+	else
+		throw json::ParsingError("invalid color");
+
+	return color;
+}
+
+std::vector<svg::Color> JsonReader::GetColorPalette(const json::Dict& data_as_map) const {
+	std::vector<svg::Color> palette;
+
+	const json::Array color_palette = data_as_map.at("color_palette").AsArray();
+	for (const auto& color : color_palette)
+	{
+		if (color.IsString())
+			palette.push_back(color.AsString());
+		else if (color.IsArray())
+		{
+			const json::Array& type_color = color.AsArray();
+			if (type_color.size() == 3)
+				palette.emplace_back(svg::Rgb(type_color[0].AsInt(), type_color[1].AsInt(), type_color[2].AsInt()));
+			else if (type_color.size() == 4)
+				palette.emplace_back(svg::Rgba(type_color[0].AsInt(), type_color[1].AsInt(), type_color[2].AsInt(), type_color[3].AsDouble()));
+			else
+				throw json::ParsingError("invalid color type");
+		}
+		else
+			throw json::ParsingError("invalid color");
+	}
+
+	return palette;
+}
+
 renderer::MapRenderer JsonReader::GetRenderSettings(const json::Dict& data_as_map) const {
 	renderer::RenderSettings settings;
 
@@ -29,57 +80,55 @@ renderer::MapRenderer JsonReader::GetRenderSettings(const json::Dict& data_as_ma
 	const json::Array& stop_label_offset = data_as_map.at("stop_label_offset").AsArray();
 	settings.stop_label_offset = { stop_label_offset[0].AsDouble(), stop_label_offset[1].AsDouble() };
 
-	if (data_as_map.at("underlayer_color").IsString())
-		settings.underlayer_color = data_as_map.at("underlayer_color").AsString();
-	else if (data_as_map.at("underlayer_color").IsArray())
-	{
-		const json::Array& underlayer_color = data_as_map.at("underlayer_color").AsArray();
-		if (underlayer_color.size() == 3)
-			settings.underlayer_color = svg::Rgb(underlayer_color[0].AsInt(),
-												underlayer_color[1].AsInt(), 
-												underlayer_color[2].AsInt());
-		else if (underlayer_color.size() == 4)
-			settings.underlayer_color = svg::Rgba(underlayer_color[0].AsInt(),
-												underlayer_color[1].AsInt(),
-												underlayer_color[2].AsInt(),
-												underlayer_color[3].AsDouble());
-		else
-			throw json::ParsingError("invalid color type");
-	}
-	else
-		throw json::ParsingError("invalid color");
+	settings.underlayer_color = GetUnderlayerColor(data_as_map);
 
-	const json::Array color_palette = data_as_map.at("color_palette").AsArray();
-	for (const auto& color : color_palette)
-	{
-		if (color.IsString())
-			settings.color_palette.push_back(color.AsString());
-		else if (color.IsArray())
-		{
-			const json::Array& type_color = color.AsArray();
-			if (type_color.size() == 3)
-				settings.color_palette.emplace_back(svg::Rgb(type_color[0].AsInt(), type_color[1].AsInt(), type_color[2].AsInt()));
-			else if (type_color.size() == 4)
-				settings.color_palette.emplace_back(svg::Rgba(type_color[0].AsInt(), type_color[1].AsInt(), type_color[2].AsInt(), type_color[3].AsDouble()));
-			else
-				throw json::ParsingError("invalid color type");
-		}
-		else
-			throw json::ParsingError("invalid color");
-	}
+	//if (data_as_map.at("underlayer_color").IsString())
+	//	settings.underlayer_color = data_as_map.at("underlayer_color").AsString();
+	//else if (data_as_map.at("underlayer_color").IsArray())
+	//{
+	//	const json::Array& underlayer_color = data_as_map.at("underlayer_color").AsArray();
+	//	if (underlayer_color.size() == 3)
+	//		settings.underlayer_color = svg::Rgb(underlayer_color[0].AsInt(),
+	//											underlayer_color[1].AsInt(), 
+	//											underlayer_color[2].AsInt());
+	//	else if (underlayer_color.size() == 4)
+	//		settings.underlayer_color = svg::Rgba(underlayer_color[0].AsInt(),
+	//											underlayer_color[1].AsInt(),
+	//											underlayer_color[2].AsInt(),
+	//											underlayer_color[3].AsDouble());
+	//	else
+	//		throw json::ParsingError("invalid color type");
+	//}
+	//else
+	//	throw json::ParsingError("invalid color");
+
+	settings.color_palette = GetColorPalette(data_as_map);
+
+	//const json::Array color_palette = data_as_map.at("color_palette").AsArray();
+	//for (const auto& color : color_palette)
+	//{
+	//	if (color.IsString())
+	//		settings.color_palette.push_back(color.AsString());
+	//	else if (color.IsArray())
+	//	{
+	//		const json::Array& type_color = color.AsArray();
+	//		if (type_color.size() == 3)
+	//			settings.color_palette.emplace_back(svg::Rgb(type_color[0].AsInt(), type_color[1].AsInt(), type_color[2].AsInt()));
+	//		else if (type_color.size() == 4)
+	//			settings.color_palette.emplace_back(svg::Rgba(type_color[0].AsInt(), type_color[1].AsInt(), type_color[2].AsInt(), type_color[3].AsDouble()));
+	//		else
+	//			throw json::ParsingError("invalid color type");
+	//	}
+	//	else
+	//		throw json::ParsingError("invalid color");
+	//}
 
 	return settings;
 }
 
-void JsonReader::FillCatalogue(Transport::Catalogue& catalogue) {
+void JsonReader::FillStopsData(Transport::Catalogue& catalogue, const json::Array& input_data) {
 	using namespace std::literals;
 
-	const json::Array& input_data = ReadBaseRequests().AsArray();
-
-	// массив для сохранения данных о расстояниях между остановками
-	std::vector<std::tuple<std::string_view, std::string_view, int>> distances_data;
-
-	// обработка данных об остановках
 	for (auto& stop_request : input_data) {
 		const auto& data_as_map = stop_request.AsMap();
 		const auto& type = data_as_map.at("type").AsString();
@@ -89,18 +138,30 @@ void JsonReader::FillCatalogue(Transport::Catalogue& catalogue) {
 			geo::Coordinates coords = { data_as_map.at("latitude").AsDouble(), data_as_map.at("longitude").AsDouble() };
 
 			catalogue.AddStop(stop_name, coords);
+		}
+	}
+}
+
+void JsonReader::FillDistancesData(Transport::Catalogue& catalogue, const json::Array& input_data) {
+	using namespace std::literals;
+
+	for (auto& stop_request : input_data) {
+		const auto& data_as_map = stop_request.AsMap();
+		const auto& type = data_as_map.at("type").AsString();
+
+		if (type == "Stop"s) {
+			const std::string& stop_from = data_as_map.at("name").AsString();
+
 			for (auto& [stop_to, distance] : data_as_map.at("road_distances").AsMap()) {
-				distances_data.push_back({ stop_name, stop_to, distance.AsInt() });
+				catalogue.AddDistance({ stop_from, stop_to }, distance.AsInt());
 			}
 		}
 	}
+}
 
-	// обработка данных о расстояниях
-	for (auto& [stop_from, stop_to, distance] : distances_data) {
-		catalogue.AddDistance({stop_from, stop_to}, distance);
-	}
+void JsonReader::FillBusesData(Transport::Catalogue& catalogue, const json::Array& input_data) {
+	using namespace std::literals;
 
-	// обработка данных о маршрутах
 	for (auto& bus_request : input_data) {
 		const auto& data_as_map = bus_request.AsMap();
 		const auto& type = data_as_map.at("type").AsString();
@@ -117,4 +178,18 @@ void JsonReader::FillCatalogue(Transport::Catalogue& catalogue) {
 			catalogue.AddBus(bus_name, stops_names, is_roundtrip);
 		}
 	}
+}
+
+void JsonReader::FillCatalogue(Transport::Catalogue& catalogue) {
+
+	const json::Array& input_data = ReadBaseRequests().AsArray();
+
+	// обработка данных об остановках
+	FillStopsData(catalogue, input_data);
+
+	// обработка данных о расстояниях
+	FillDistancesData(catalogue, input_data);
+
+	// обработка данных о маршрутах
+	FillBusesData(catalogue, input_data);
 }

@@ -40,6 +40,37 @@ namespace renderer {
 		return lines_route;
 	}
 
+	svg::Text MapRenderer::SetTextParams(const std::pair<std::string_view, const Transport::Bus*>& bus_by_name, const SphereProjector& projector) const {
+		svg::Text text;
+
+		text.SetPosition(projector(bus_by_name.second->stops[0]->coords));
+		text.SetOffset(render_settings_.bus_label_offset);
+		text.SetFontSize(render_settings_.bus_label_font_size);
+		text.SetFontFamily("Verdana");
+		text.SetFontWeight("bold");
+		text.SetData(bus_by_name.second->name);
+
+		return text;
+	}
+
+	svg::Text MapRenderer::SetUnderlayerParams(const std::pair<std::string_view, const Transport::Bus*>& bus_by_name, const SphereProjector& projector) const {
+		svg::Text underlayer;
+
+		underlayer.SetPosition(projector(bus_by_name.second->stops[0]->coords));
+		underlayer.SetOffset(render_settings_.bus_label_offset);
+		underlayer.SetFontSize(render_settings_.bus_label_font_size);
+		underlayer.SetFontFamily("Verdana");
+		underlayer.SetFontWeight("bold");
+		underlayer.SetData(bus_by_name.second->name);
+		underlayer.SetFillColor(render_settings_.underlayer_color);
+		underlayer.SetStrokeColor(render_settings_.underlayer_color);
+		underlayer.SetStrokeWidth(render_settings_.underlayer_width);
+		underlayer.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
+		underlayer.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+
+		return underlayer;
+	}
+
 	std::vector<svg::Text> MapRenderer::GetBusLabels(const std::map<std::string_view, const Transport::Bus*>& buses_by_names, const SphereProjector& projector) const {
 		std::vector<svg::Text> bus_labels;
 
@@ -48,32 +79,14 @@ namespace renderer {
 			if (bus->stops.empty())
 				continue;
 
-			svg::Text text;
-			text.SetPosition(projector(bus->stops[0]->coords));
-			text.SetOffset(render_settings_.bus_label_offset);
-			text.SetFontSize(render_settings_.bus_label_font_size);
-			text.SetFontFamily("Verdana");
-			text.SetFontWeight("bold");
-			text.SetData(bus->name);
+			svg::Text text = SetTextParams({ name, bus }, projector);
 			text.SetFillColor(render_settings_.color_palette[color_index]);
-
 			if (color_index < render_settings_.color_palette.size() - 1)
 				++color_index;
 			else
 				color_index = 0;
 
-			svg::Text underlayer;
-			underlayer.SetPosition(projector(bus->stops[0]->coords));
-			underlayer.SetOffset(render_settings_.bus_label_offset);
-			underlayer.SetFontSize(render_settings_.bus_label_font_size);
-			underlayer.SetFontFamily("Verdana");
-			underlayer.SetFontWeight("bold");
-			underlayer.SetData(bus->name);
-			underlayer.SetFillColor(render_settings_.underlayer_color);
-			underlayer.SetStrokeColor(render_settings_.underlayer_color);
-			underlayer.SetStrokeWidth(render_settings_.underlayer_width);
-			underlayer.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
-			underlayer.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+			svg::Text underlayer = SetUnderlayerParams({ name, bus }, projector);
 
 			bus_labels.push_back(underlayer);
 			bus_labels.push_back(text);
@@ -108,29 +121,43 @@ namespace renderer {
 		return stops_symbols;
 	}
 
+	svg::Text MapRenderer::SetTextParams(const Transport::Stop* stop, const SphereProjector& projector) const {
+		svg::Text text;
+
+		text.SetPosition(projector(stop->coords));
+		text.SetOffset(render_settings_.stop_label_offset);
+		text.SetFontSize(render_settings_.stop_label_font_size);
+		text.SetFontFamily("Verdana");
+		text.SetData(stop->name);
+		text.SetFillColor("black");
+
+		return text;
+	}
+
+	svg::Text MapRenderer::SetUnderlayerParams(const Transport::Stop* stop, const SphereProjector& projector) const {
+		svg::Text underlayer;
+
+		underlayer.SetPosition(projector(stop->coords));
+		underlayer.SetOffset(render_settings_.stop_label_offset);
+		underlayer.SetFontSize(render_settings_.stop_label_font_size);
+		underlayer.SetFontFamily("Verdana");
+		underlayer.SetData(stop->name);
+		underlayer.SetFillColor(render_settings_.underlayer_color);
+		underlayer.SetStrokeColor(render_settings_.underlayer_color);
+		underlayer.SetStrokeWidth(render_settings_.underlayer_width);
+		underlayer.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
+		underlayer.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+
+		return underlayer;
+	}
+
 	std::vector<svg::Text> MapRenderer::GetStopsLabels(const std::map<std::string_view, const Transport::Stop*>& stops_by_names, const SphereProjector& projector) const {
 		std::vector<svg::Text> stops_labels;
 
 		for (const auto& [name, stop] : stops_by_names) {
-			svg::Text text;
-			text.SetPosition(projector(stop->coords));
-			text.SetOffset(render_settings_.stop_label_offset);
-			text.SetFontSize(render_settings_.stop_label_font_size);
-			text.SetFontFamily("Verdana");
-			text.SetData(stop->name);
-			text.SetFillColor("black");
+			svg::Text text = SetTextParams(stop, projector);
 
-			svg::Text underlayer;
-			underlayer.SetPosition(projector(stop->coords));
-			underlayer.SetOffset(render_settings_.stop_label_offset);
-			underlayer.SetFontSize(render_settings_.stop_label_font_size);
-			underlayer.SetFontFamily("Verdana");
-			underlayer.SetData(stop->name);
-			underlayer.SetFillColor(render_settings_.underlayer_color);
-			underlayer.SetStrokeColor(render_settings_.underlayer_color);
-			underlayer.SetStrokeWidth(render_settings_.underlayer_width);
-			underlayer.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
-			underlayer.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+			svg::Text underlayer = SetUnderlayerParams(stop, projector);
 
 			stops_labels.push_back(std::move(underlayer));
 			stops_labels.push_back(std::move(text));

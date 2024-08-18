@@ -20,6 +20,14 @@ public:
     void FillCatalogue(Transport::Catalogue& catalogue);
 
 private:
+
+    svg::Color GetUnderlayerColor(const json::Dict& data_as_map) const;
+    std::vector<svg::Color> GetColorPalette(const json::Dict& data_as_map) const;
+
+    void FillBusesData(Transport::Catalogue& catalogue, const json::Array& input_data);
+    void FillDistancesData(Transport::Catalogue& catalogue, const json::Array& input_data);
+    void FillStopsData(Transport::Catalogue& catalogue, const json::Array& input_data);
+
     json::Document input_;
     json::Node null_ = nullptr;
 };
