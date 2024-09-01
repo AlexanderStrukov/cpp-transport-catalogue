@@ -2,6 +2,7 @@
 
 #include "json_reader.h"
 #include "transport_catalogue.h"
+#include "json_builder.h"
 
 #include <sstream>
 

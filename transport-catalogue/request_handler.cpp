@@ -6,19 +6,19 @@ void RequestProcessor::ProcessRequests(const json::Node& stat_requests) const {
 	json::Array processed_data;
 
 	for (const auto& request : stat_requests.AsArray()) {
-		const auto& data_as_map = request.AsMap();
+		const auto& data_as_map = request.AsDict();
 		const auto& type = data_as_map.at("type").AsString();
 
 		if (type == "Stop"s) {
-			processed_data.emplace_back(ProcessStopData(data_as_map).AsMap());
+			processed_data.emplace_back(ProcessStopData(data_as_map).AsDict());
 		}
 		else if (type == "Bus"s)
 		{
-			processed_data.emplace_back(ProcessBusData(data_as_map).AsMap());
+			processed_data.emplace_back(ProcessBusData(data_as_map).AsDict());
 		}
 		else if (type == "Map"s)
 		{
-			processed_data.emplace_back(ProcessMap(data_as_map).AsMap());
+			processed_data.emplace_back(ProcessMap(data_as_map).AsDict());
 		}
 	}
 
@@ -28,57 +28,88 @@ void RequestProcessor::ProcessRequests(const json::Node& stat_requests) const {
 const json::Node RequestProcessor::ProcessStopData(const json::Dict& data_as_map) const {
 	using namespace std::literals;
 
-	json::Dict request_data;
+	json::Builder builder;
+	json::Node result_node;
 
-	const std::string& stop_name = data_as_map.at("name").AsString();
-	request_data["request_id"] = data_as_map.at("id").AsInt();
+	const std::string& stop_name = data_as_map.at("name"s).AsString();
+	int request_id = data_as_map.at("id"s).AsInt();
 	if (!catalogue_.GetStop(stop_name)) {
-		request_data["error_message"] = json::Node{"not found"s};
+		builder.StartDict()
+					.Key("request_id"s).Value(request_id)
+					.Key("error_message"s).Value("not found"s)
+				.EndDict();
+
+		result_node = builder.Build();
 	}
 	else
 	{
-		json::Array buses;
+		builder.StartDict()
+					.Key("request_id"s).Value(request_id)
+					.Key("buses"s).StartArray();
+
 		for (auto& bus : catalogue_.GetBusesForStop(stop_name)) {
-			buses.push_back(bus);
+			builder.Value(bus);
 		}
-		request_data["buses"] = buses;
+
+		builder.EndArray().EndDict();
+		result_node = builder.Build();
 	}
 
-	return json::Node{ request_data };
+	return result_node;
 }
 
 const json::Node RequestProcessor::ProcessBusData(const json::Dict& data_as_map) const {
 	using namespace std::literals;
 
-	json::Dict request_data;
+	json::Builder builder;
+	json::Node result_node;
 
-	const std::string& bus_id = data_as_map.at("name").AsString();
-	request_data["request_id"] = data_as_map.at("id").AsInt();
+	const std::string& bus_id = data_as_map.at("name"s).AsString();
+	int request_id = data_as_map.at("id"s).AsInt();
 	if (!catalogue_.GetBus(bus_id)) {
-		request_data["error_message"] = json::Node{"not found"s};
+		builder.StartDict()
+					.Key("request_id"s).Value(request_id)
+					.Key("error_message"s).Value("not found"s)
+				.EndDict();
+
+		result_node = builder.Build();
 	}
 	else
 	{
 		Transport::BusData bus_data = catalogue_.GetBusData(bus_id);
-		request_data["stop_count"] = bus_data.count_stops;
-		request_data["unique_stop_count"] = bus_data.unique_stops;
-		request_data["route_length"] = bus_data.real_distance;
-		request_data["curvature"] = bus_data.real_distance / bus_data.geo_distance;
+		builder.StartDict()
+					.Key("request_id"s).Value(request_id)
+					.Key("stop_count"s).Value(bus_data.count_stops)
+					.Key("unique_stop_count"s).Value(bus_data.unique_stops)
+					.Key("route_length"s).Value(bus_data.real_distance)
+					.Key("curvature"s).Value(bus_data.real_distance / bus_data.geo_distance)
+				.EndDict();
+
+		result_node = builder.Build();
 	}
 
-	return json::Node{ request_data };
+	return result_node;
 }
 
 const json::Node RequestProcessor::ProcessMap(const json::Dict& request_map) const {
-	json::Dict result;
+	using namespace std::literals;
 
-	result["request_id"] = request_map.at("id").AsInt();
+	json::Builder builder;
+	json::Node result_node;
+
+	int request_id = request_map.at("id").AsInt();
 	std::ostringstream out;
 	svg::Document map = RenderMap();
 	map.Render(out);
-	result["map"] = out.str();
 
-	return json::Node{ result };
+	builder.StartDict()
+				.Key("request_id"s).Value(request_id)
+				.Key("map"s).Value(out.str())
+			.EndDict();
+
+	result_node = builder.Build();
+
+	return result_node;
 }
 
 svg::Document RequestProcessor::RenderMap() const {

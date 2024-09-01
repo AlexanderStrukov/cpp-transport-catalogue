@@ -10,7 +10,7 @@ int main() {
     json_reader.FillCatalogue(catalogue);
 
     const auto& stat_requests = json_reader.ReadStatRequests();
-    const auto& render_settings = json_reader.ReadRenderSettings().AsMap();
+    const auto& render_settings = json_reader.ReadRenderSettings().AsDict();
     const auto& renderer = json_reader.GetRenderSettings(render_settings);
 
     RequestProcessor processor(catalogue, renderer);

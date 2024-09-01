@@ -181,19 +181,19 @@ namespace renderer {
 		SphereProjector projector(bus_stops_coords.begin(), bus_stops_coords.end(),
 								render_settings_.width, render_settings_.height, render_settings_.padding);
 		for (const auto& line : GetBusRouteLines(buses_by_names, projector)) {
-			dataSVG.Add(std::move(line));
+			dataSVG.Add(line);
 		}
 
 		for (const auto& text : GetBusLabels(buses_by_names, projector)) {
-			dataSVG.Add(std::move(text));
+			dataSVG.Add(text);
 		}
 
 		for (const auto& circle : GetStopsSymbols(stops_by_names, projector)) {
-			dataSVG.Add(std::move(circle));
+			dataSVG.Add(circle);
 		}
 
 		for (const auto& text : GetStopsLabels(stops_by_names, projector)) {
-			dataSVG.Add(std::move(text));
+			dataSVG.Add(text);
 		}
 
 		return dataSVG;
