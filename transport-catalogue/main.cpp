@@ -10,10 +10,14 @@ int main() {
     json_reader.FillCatalogue(catalogue);
 
     const auto& stat_requests = json_reader.ReadStatRequests();
+
     const auto& render_settings = json_reader.ReadRenderSettings().AsDict();
     const auto& renderer = json_reader.GetRenderSettings(render_settings);
 
-    RequestProcessor processor(catalogue, renderer);
+    const auto& routing_settings = json_reader.ReadRoutingSettings().AsDict();
+    const auto& settings = json_reader.GetRoutingSettings(routing_settings);
+
+    RequestProcessor processor(catalogue, renderer, settings);
     //processor.RenderMap().Render(std::cout);
     processor.ProcessRequests(stat_requests);
 }

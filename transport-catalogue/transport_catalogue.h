@@ -53,6 +53,10 @@ namespace Transport {
 
         const std::map<std::string_view, const Transport::Bus*> GetBusesSortedByNames() const;
 
+        std::vector<const Stop*> GetStopsPtr() const;
+
+        std::vector<const Bus*> GetBusesPtr() const;
+
     private:
 
         std::deque<Stop> stops_;

@@ -111,3 +111,25 @@ const std::map<std::string_view, const TS::Bus*> TS::Catalogue::GetBusesSortedBy
 	}
 	return buses_by_names;
 }
+
+std::vector<const Transport::Stop*> Transport::Catalogue::GetStopsPtr() const {
+	std::vector<const Transport::Stop*> stops_ptr;
+	stops_ptr.reserve(stops_by_names_.size());
+
+	for (const auto& [name, stop] : stops_by_names_) {
+		stops_ptr.push_back(stop);
+	}
+
+	return stops_ptr;
+}
+
+std::vector<const Transport::Bus*> Transport::Catalogue::GetBusesPtr() const {
+	std::vector<const Transport::Bus*> buses_ptr;
+	buses_ptr.reserve(buses_by_names_.size());
+
+	for (const auto& [name, bus] : buses_by_names_) {
+		buses_ptr.push_back(bus);
+	}
+
+	return buses_ptr;
+}

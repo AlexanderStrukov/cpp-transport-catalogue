@@ -12,6 +12,10 @@ const json::Node& JsonReader::ReadRenderSettings() const {
 	return input_.GetRoot().AsDict().at("render_settings");
 }
 
+const json::Node& JsonReader::ReadRoutingSettings() const {
+	return input_.GetRoot().AsDict().at("routing_settings");
+}
+
 svg::Color JsonReader::GetUnderlayerColor(const json::Dict& data_as_map) const {
 	svg::Color color;
 
@@ -82,6 +86,15 @@ renderer::MapRenderer JsonReader::GetRenderSettings(const json::Dict& data_as_ma
 
 	settings.underlayer_color = GetUnderlayerColor(data_as_map);
 	settings.color_palette = GetColorPalette(data_as_map);
+
+	return settings;
+}
+
+Transport::RoutingSettings JsonReader::GetRoutingSettings(const json::Dict& data_as_map) const {
+	Transport::RoutingSettings settings;
+
+	settings.bus_wait_time = data_as_map.at("bus_wait_time").AsDouble();
+	settings.bus_velocity = data_as_map.at("bus_velocity").AsDouble();
 
 	return settings;
 }

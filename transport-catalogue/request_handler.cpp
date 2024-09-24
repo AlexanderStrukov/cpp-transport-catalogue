@@ -20,6 +20,10 @@ void RequestProcessor::ProcessRequests(const json::Node& stat_requests) const {
 		{
 			processed_data.emplace_back(ProcessMap(data_as_map).AsDict());
 		}
+		else if (type == "Route"s)
+		{
+			processed_data.emplace_back(ProcessRoute(data_as_map).AsDict());
+		}
 	}
 
 	json::Print(json::Document{processed_data}, std::cout);
@@ -97,7 +101,7 @@ const json::Node RequestProcessor::ProcessMap(const json::Dict& request_map) con
 	json::Builder builder;
 	json::Node result_node;
 
-	int request_id = request_map.at("id").AsInt();
+	int request_id = request_map.at("id"s).AsInt();
 	std::ostringstream out;
 	svg::Document map = RenderMap();
 	map.Render(out);
@@ -108,6 +112,44 @@ const json::Node RequestProcessor::ProcessMap(const json::Dict& request_map) con
 			.EndDict();
 
 	result_node = builder.Build();
+
+	return result_node;
+}
+
+const json::Node RequestProcessor::ProcessRoute(const json::Dict& data_as_map) const {
+	using namespace std::literals;
+
+	json::Builder builder;
+	json::Node result_node;
+
+	int request_id = data_as_map.at("id"s).AsInt();
+	const std::string& stop_from = data_as_map.at("from"s).AsString();
+	const std::string& stop_to = data_as_map.at("to"s).AsString();
+
+	std::optional<Transport::RouteData> route = router_.BuildRouteBetweenStops(stop_from, stop_to);
+	if (!route.has_value()) {
+		builder.StartDict()
+					.Key("request_id"s).Value(request_id)
+					.Key("error_message"s).Value("not found"s)
+				.EndDict();
+
+		result_node = builder.Build();
+	}
+	else
+	{
+		json::Array items_of_route;
+		for (auto& item : route->route_items) {
+			items_of_route.emplace_back(std::visit(RouteItemParser{}, item));
+		}
+
+		builder.StartDict()
+					.Key("request_id"s).Value(request_id)
+					.Key("total_time"s).Value(route->total_time)
+					.Key("items"s).Value(items_of_route)
+				.EndDict();
+
+		result_node = builder.Build();
+	}
 
 	return result_node;
 }
