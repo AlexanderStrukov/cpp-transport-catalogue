@@ -18,6 +18,5 @@ int main() {
     const auto& settings = json_reader.GetRoutingSettings(routing_settings);
 
     RequestProcessor processor(catalogue, renderer, settings);
-    //processor.RenderMap().Render(std::cout);
     processor.ProcessRequests(stat_requests);
 }
